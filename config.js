@@ -6,8 +6,8 @@ window.SITE = {
   rules: "https://darkshire.ru/rules",
   launcherWin: "https://launcher.darkshire.ru/DarkshireRP.exe",
   launcherJar: "https://launcher.darkshire.ru/DarkshireRP.jar",
-  // Пока общий сервер Даркшира: приглашения на сервер Темнопустоши в проекте нет.
-  discord: "https://discord.gg/6ThChKv6kP",
+  // Бессрочное приглашение на сервер «Темнопустошь» (сверено 28.10.2026).
+  discord: "https://discord.gg/q8Cx3BAzHM",
   updated: "27 октября 2026"
 };
 
