@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Вики Темнопустоши</title>
+<meta name="description" content="Вики Темнопустоши: персонаж, медицина, оружие, броня, ремесло, торговля, поселения, транспорт и управление.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2312100d'/%3E%3Cpath d='M6 24 16 6l10 18z' fill='none' stroke='%23d9a23a' stroke-width='3'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css">
+<script src="config.js"></script>
+<script src="wiki-data.js"></script>
+<script src="wiki.js" defer></script>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <a class="logo" href="index.html">Темно<span>пустошь</span></a>
+    <nav class="nav">
+      <a href="index.html">Главная</a>
+      <a href="wiki.html" aria-current="page">Вики</a>
+      <a data-link="rules" href="#">Правила</a>
+      <a data-link="discord" href="#">Discord</a>
+      <a data-link="profile" href="#">Кабинет</a>
+    </nav>
+  </div>
+</header>
+
+<div class="wrap wiki">
+  <aside class="side">
+    <input class="search" id="q" type="search" placeholder="Поиск: бинт, санки, осада…" autocomplete="off" aria-label="Поиск по вики">
+    <button class="btn menu-btn" id="menu" type="button" aria-expanded="false">Разделы</button>
+    <ul class="toc" id="toc"></ul>
+  </aside>
+  <main class="article" id="page"></main>
+</div>
+
+<footer class="foot">
+  <div class="wrap">
+    <span>Нашёл в вики не то, что в игре? Напиши в Discord, в отзывы ЗБТ.</span>
+    <span>Обновлено: <span data-site="updated"></span></span>
+  </div>
+</footer>
+</body>
+</html>
