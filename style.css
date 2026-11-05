@@ -120,6 +120,10 @@ section.block > .wrap > p.sub { color: var(--muted); margin: 0 0 28px; max-width
 a.card:hover { border-color: var(--accent); color: var(--text); }
 .card h3 { margin: 0 0 6px; font-size: 17px; }
 .card p { margin: 0; color: var(--muted); font-size: 15px; }
+.gallery img {
+  display: block; width: 100%; height: auto; margin-bottom: 12px;
+  border: 1px solid var(--line); border-radius: 6px; background: var(--bg);
+}
 
 .note {
   background: var(--bg-2); border-left: 3px solid var(--accent-2); padding: 14px 18px; border-radius: 0 8px 8px 0;
@@ -158,6 +162,9 @@ a.card:hover { border-color: var(--accent); color: var(--text); }
 .entry p { margin: 0 0 8px; color: #cdc2af; }
 .entry ul { margin: 0 0 8px; padding-left: 20px; color: #cdc2af; }
 .entry li { margin-bottom: 4px; }
+.entry-media { margin: 16px 0 6px; }
+.entry-media img { display: block; height: auto; border-radius: 6px; }
+.entry-media figcaption { margin-top: 6px; font-size: 14px; color: var(--muted); }
 .keys {
   margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--line);
   font-size: 14px; color: var(--muted);

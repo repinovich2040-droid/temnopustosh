@@ -8,7 +8,7 @@ window.SITE = {
   launcherJar: "https://launcher.darkshire.ru/DarkshireRP.jar",
   // Бессрочное приглашение на сервер «Темнопустошь» (сверено 28.10.2026).
   discord: "https://discord.gg/q8Cx3BAzHM",
-  updated: "27 октября 2026"
+  updated: "5 ноября 2026"
 };
 
 document.addEventListener("DOMContentLoaded", function () {

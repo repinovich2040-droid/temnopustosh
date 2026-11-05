@@ -53,6 +53,21 @@
       e.body.forEach(function (line) { var li = el("li"); rich(li, line, needle); ul.appendChild(li); });
       box.appendChild(ul);
     }
+    if (e.image) {
+      var figure = el("figure", "entry-media");
+      var link = el("a");
+      var img = el("img");
+      link.href = e.image.src;
+      img.src = e.image.src;
+      img.alt = e.image.alt;
+      img.width = e.image.width;
+      img.height = e.image.height;
+      img.loading = "lazy";
+      link.appendChild(img);
+      figure.appendChild(link);
+      figure.appendChild(el("figcaption", null, e.image.caption));
+      box.appendChild(figure);
+    }
     if (e.keys && e.keys.length) {
       var k = el("div", "keys");
       k.appendChild(el("b", null, "Как: "));
