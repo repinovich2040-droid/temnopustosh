@@ -120,60 +120,95 @@
     return { s: wiki[0] };
   }
 
+  function renderHome() {
+    var hero = el("section", "wiki-hero");
+    var picture = el("img");
+    picture.src = "media/hero.jpg";
+    picture.alt = "";
+    hero.appendChild(picture);
+    hero.appendChild(el("p", "eyebrow", "Справочник игрока"));
+    hero.appendChild(el("h1", null, "Вики Темнопустоши"));
+    hero.appendChild(el("p", null, "От первого выхода из Порога до своей каморки. Здесь собраны гайды по игре."));
+    page.appendChild(hero);
+    var quick = el("nav", "chapter");
+    quick.setAttribute("aria-label", "Быстрый доступ");
+    quick.appendChild(link("setup", "Как зайти"));
+    quick.appendChild(link("keys", "Управление"));
+    quick.appendChild(link("roleplay", "Ролевая игра"));
+    page.appendChild(quick);
+    page.appendChild(el("h2", "wiki-heading", "С чего начать"));
+    var cards = el("nav", "card-grid");
+    cards.setAttribute("aria-label", "С чего начать");
+    [
+      ["first-route", "Первые шаги", "Порог и первая вылазка.", "field-camp.png"],
+      ["crafting", "Ремесло", "Верстаки, чертежи и материалы.", "vesti7-stations.png"],
+      ["artifacts", "Диковины", "Что можно принести из вылазки.", "vesti7-artifacts.png"],
+      ["territory", "Каморки", "Где хранить добычу и обустроить жильё.", "field-room.png"],
+      ["armor", "Броня", "Снаряжение для вылазок.", "vesti7-plitnik.png"],
+      ["cars", "Транспорт", "Мотоцикл, машины и горючее.", "wiki-motorcycle.webp"]
+    ].forEach(function (item) {
+      var card = link(item[0], null, "wiki-card");
+      var image = el("img");
+      image.src = item[3];
+      image.alt = "";
+      card.appendChild(image);
+      card.appendChild(el("strong", null, item[1]));
+      card.appendChild(el("span", null, item[2]));
+      cards.appendChild(card);
+    });
+    page.appendChild(cards);
+    var index = el("section", "guide-index");
+    index.id = "guide-index";
+    index.appendChild(el("h2", "wiki-heading", "Все разделы"));
+    var groups = el("div", "guide-routes");
+    wiki.forEach(function (section) {
+      var a = link(section.id === "start" ? "setup" : section.id, section.title, "guide-route");
+      a.appendChild(el("span", null, section.intro));
+      groups.appendChild(a);
+    });
+    index.appendChild(groups);
+    page.appendChild(index);
+  }
+
+  function renderReader(section, entryId) {
+    var path = el("nav", "breadcrumb");
+    path.setAttribute("aria-label", "Путь к статье");
+    path.appendChild(link("start", "Вики"));
+    path.appendChild(document.createTextNode(" / " + section.title));
+    page.appendChild(path);
+    page.appendChild(el("h1", null, section.title));
+    if (section.intro) page.appendChild(el("p", "intro", section.intro));
+    var grid = el("div", "reader-grid");
+    var content = el("div");
+    var chapter = el("nav", "chapter");
+    chapter.setAttribute("aria-label", "В этом разделе");
+    section.entries.forEach(function (entry) {
+      chapter.appendChild(link(entry.id, entry.title));
+      if (!entryId || entry.id === entryId) content.appendChild(renderEntry(entry));
+    });
+    grid.appendChild(content);
+    grid.appendChild(chapter);
+    page.appendChild(grid);
+  }
+
   function showSection(id) {
     var hit = findSection(id);
-    var s = hit.s;
+    var section = hit.s;
+    var home = section.id === "start" && !hit.entry;
     page.textContent = "";
-    var home = s.id === "start" && !hit.entry;
-    page.appendChild(el("h1", null, home ? "Гайды по Темнопустоши" : s.title));
-    if (s.intro) page.appendChild(el("p", "intro", s.intro));
-    if (home) {
-      var routes = el("nav", "guide-routes");
-      routes.setAttribute("aria-label", "С чего начать");
-      [
-        ["setup", "Как зайти", "Аккаунт, лаунчер и первый запуск."],
-        ["first-route", "Первый час", "Порядок действий от Порога до вылазки."],
-        ["keys", "Кнопки и команды", "Управление, голосовой чат и Связник."],
-        ["guide-index", "Справочник", "Все разделы по механикам."]
-      ].forEach(function (item) {
-        var a = link(item[0], item[1], "guide-route");
-        a.appendChild(el("span", null, item[2]));
-        routes.appendChild(a);
-      });
-      page.appendChild(routes);
-    }
-    var chapter = el("nav", "chapter");
-    chapter.setAttribute("aria-label", "В этой главе");
-    s.entries.forEach(function (e) { chapter.appendChild(link(e.id, e.title)); });
-    page.appendChild(chapter);
-    s.entries.forEach(function (e) { page.appendChild(renderEntry(e)); });
-    if (s.id === "start") {
-      var index = el("section", "guide-index");
-      index.id = "guide-index";
-      index.appendChild(el("h2", null, "Все разделы"));
-      var groups = el("div", "guide-routes");
-      wiki.slice(1).forEach(function (section) {
-        var a = link(section.id, section.title, "guide-route");
-        a.appendChild(el("span", null, section.intro));
-        groups.appendChild(a);
-      });
-      index.appendChild(groups);
-      page.appendChild(index);
-    }
+    if (home) renderHome();
+    else renderReader(section, hit.entry);
     toc.querySelectorAll("a").forEach(function (a) {
-      var active = a.dataset.id === s.id;
+      var active = a.dataset.id === section.id;
       a.classList.toggle("on", active);
       if (active) a.setAttribute("aria-current", "location");
       else a.removeAttribute("aria-current");
     });
-    document.title = (home ? "Гайды" : s.title) + " · Темнопустошь";
-    if (hit.entry || id === "guide-index") {
-      var target = document.getElementById(hit.entry || id);
-      if (target) target.scrollIntoView();
-    } else {
-      window.scrollTo(0, 0);
-    }
+    document.title = (home ? "Вики" : section.title) + " · Темнопустошь";
+    if (id === "guide-index") document.getElementById(id).scrollIntoView();
+    else window.scrollTo(0, 0);
   }
+
 
   function showSearch(query) {
     var needle = normalize(query);
