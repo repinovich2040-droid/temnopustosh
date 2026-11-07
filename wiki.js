@@ -4,6 +4,13 @@
   var page = document.getElementById("page");
   var q = document.getElementById("q");
   var menu = document.getElementById("menu");
+  var status = document.getElementById("search-status");
+
+  function link(id, title, cls) {
+    var a = el("a", cls, title);
+    a.href = "#" + id;
+    return a;
+  }
 
   function el(tag, cls, text) {
     var n = document.createElement(tag);
@@ -34,8 +41,12 @@
     parent.appendChild(document.createTextNode(text.slice(i)));
   }
 
-  function entryText(e) {
-    return [e.title, e.lead].concat(e.body || [], e.keys || []).join(" ").toLowerCase().replace(/[\[\]]/g, "");
+  function normalize(text) {
+    return text.toLowerCase().replace(/ё/g, "е").replace(/[\[\]]/g, "");
+  }
+
+  function entryText(e, section) {
+    return normalize([section, e.title, e.lead].concat(e.body || [], e.keys || [], e.tags || []).join(" "));
   }
 
   function renderEntry(e, needle) {
@@ -49,33 +60,39 @@
     box.appendChild(h);
     if (e.lead) { var p = el("p", "lead"); rich(p, e.lead, needle); box.appendChild(p); }
     if (e.body && e.body.length) {
-      var ul = el("ul");
+      var ul = el(e.steps ? "ol" : "ul");
       e.body.forEach(function (line) { var li = el("li"); rich(li, line, needle); ul.appendChild(li); });
       box.appendChild(ul);
     }
     if (e.image) {
       var figure = el("figure", "entry-media");
-      var link = el("a");
+      var imageLink = el("a");
       var img = el("img");
-      link.href = e.image.src;
+      imageLink.href = e.image.src;
       img.src = e.image.src;
       img.alt = e.image.alt;
       img.width = e.image.width;
       img.height = e.image.height;
       img.loading = "lazy";
-      link.appendChild(img);
-      figure.appendChild(link);
+      imageLink.appendChild(img);
+      figure.appendChild(imageLink);
       figure.appendChild(el("figcaption", null, e.image.caption));
       box.appendChild(figure);
     }
     if (e.keys && e.keys.length) {
       var k = el("div", "keys");
-      k.appendChild(el("b", null, "Как: "));
-      e.keys.forEach(function (line, i) {
-        if (i) k.appendChild(document.createTextNode(" · "));
-        rich(k, line, needle);
+      e.keys.forEach(function (line) {
+        var row = el("div");
+        rich(row, line, needle);
+        k.appendChild(row);
       });
       box.appendChild(k);
+    }
+    if (e.links) {
+      var related = el("nav", "entry-links");
+      related.setAttribute("aria-label", "По теме");
+      e.links.forEach(function (item) { related.appendChild(link(item[0], item[1])); });
+      box.appendChild(related);
     }
     return box;
   }
@@ -107,20 +124,60 @@
     var hit = findSection(id);
     var s = hit.s;
     page.textContent = "";
-    page.appendChild(el("h1", null, s.title));
+    var home = s.id === "start" && !hit.entry;
+    page.appendChild(el("h1", null, home ? "Гайды по Темнопустоши" : s.title));
     if (s.intro) page.appendChild(el("p", "intro", s.intro));
+    if (home) {
+      var routes = el("nav", "guide-routes");
+      routes.setAttribute("aria-label", "С чего начать");
+      [
+        ["setup", "Как зайти", "Аккаунт, лаунчер и первый запуск."],
+        ["first-route", "Первый час", "Порядок действий от Порога до вылазки."],
+        ["keys", "Кнопки и команды", "Управление, голосовой чат и Связник."],
+        ["guide-index", "Справочник", "Все разделы по механикам."]
+      ].forEach(function (item) {
+        var a = link(item[0], item[1], "guide-route");
+        a.appendChild(el("span", null, item[2]));
+        routes.appendChild(a);
+      });
+      page.appendChild(routes);
+    }
+    var chapter = el("nav", "chapter");
+    chapter.setAttribute("aria-label", "В этой главе");
+    s.entries.forEach(function (e) { chapter.appendChild(link(e.id, e.title)); });
+    page.appendChild(chapter);
     s.entries.forEach(function (e) { page.appendChild(renderEntry(e)); });
-    toc.querySelectorAll("a").forEach(function (a) { a.classList.toggle("on", a.dataset.id === s.id); });
-    document.title = s.title + " · Вики Темнопустоши";
-    if (hit.entry) {
-      var target = document.getElementById(hit.entry);
+    if (s.id === "start") {
+      var index = el("section", "guide-index");
+      index.id = "guide-index";
+      index.appendChild(el("h2", null, "Все разделы"));
+      var groups = el("div", "guide-routes");
+      wiki.slice(1).forEach(function (section) {
+        var a = link(section.id, section.title, "guide-route");
+        a.appendChild(el("span", null, section.intro));
+        groups.appendChild(a);
+      });
+      index.appendChild(groups);
+      page.appendChild(index);
+    }
+    toc.querySelectorAll("a").forEach(function (a) {
+      var active = a.dataset.id === s.id;
+      a.classList.toggle("on", active);
+      if (active) a.setAttribute("aria-current", "location");
+      else a.removeAttribute("aria-current");
+    });
+    document.title = (home ? "Гайды" : s.title) + " · Темнопустошь";
+    if (hit.entry || id === "guide-index") {
+      var target = document.getElementById(hit.entry || id);
       if (target) target.scrollIntoView();
     } else {
       window.scrollTo(0, 0);
     }
   }
 
-  function showSearch(needle) {
+  function showSearch(query) {
+    var needle = normalize(query);
+    var terms = needle.split(/\s+/);
     page.textContent = "";
     var found = 0;
     page.appendChild(el("h1", null, "Поиск"));
@@ -128,7 +185,11 @@
     page.appendChild(intro);
     wiki.forEach(function (s) {
       s.entries.forEach(function (e) {
-        if (entryText(e).indexOf(needle) === -1 && s.title.toLowerCase().indexOf(needle) === -1) return;
+        var haystack = entryText(e, s.title);
+        if (!terms.every(function (term) {
+          if (term.length > 1) return haystack.includes(term);
+          return haystack.split(/[^\p{L}\p{N}]+/u).includes(term);
+        })) return;
         found++;
         var box = renderEntry(e, needle);
         var from = el("p", "intro", s.title);
@@ -138,29 +199,39 @@
       });
     });
     intro.textContent = found ? "Нашлось записей: " + found : "";
+    status.textContent = found ? intro.textContent : "Ничего не нашлось";
     if (!found) page.appendChild(el("p", "empty", "Ничего не нашлось. Попробуй другое слово, например «бинт» или «машина»."));
-    toc.querySelectorAll("a").forEach(function (a) { a.classList.remove("on"); });
+    toc.querySelectorAll("a").forEach(function (a) { a.classList.remove("on"); a.removeAttribute("aria-current"); });
   }
 
   function route() {
-    var id = decodeURIComponent(location.hash.slice(1));
+    var id = location.hash.slice(1);
+    try { id = decodeURIComponent(id); } catch (_) { id = ""; }
+    status.textContent = "";
     showSection(id);
   }
 
   buildToc();
   q.addEventListener("input", function () {
-    var needle = q.value.trim().toLowerCase();
-    if (needle.length >= 2) showSearch(needle); else route();
+    var query = q.value.trim();
+    if (query) showSearch(query); else route();
   });
-  toc.addEventListener("click", function () {
+  function closeMenu() {
     q.value = "";
     toc.classList.remove("open");
     menu.setAttribute("aria-expanded", "false");
+  }
+  document.addEventListener("click", function (event) {
+    var a = event.target.closest("a[href^='#']");
+    if (!a || !(page.contains(a) || toc.contains(a)) || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+    closeMenu();
+    if (a.hash === location.hash) route();
+    page.focus({ preventScroll: true });
   });
   menu.addEventListener("click", function () {
     var open = toc.classList.toggle("open");
     menu.setAttribute("aria-expanded", open ? "true" : "false");
   });
-  window.addEventListener("hashchange", function () { q.value = ""; route(); });
+  window.addEventListener("hashchange", function () { closeMenu(); route(); });
   route();
 })();
